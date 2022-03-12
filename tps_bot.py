@@ -14,6 +14,7 @@ def help(update,context):
     response = '🤖<b> Hello there!\nWelcome to the TPS Price Alert Bot</b>\n\nSee below for a list of commands:\n\n'
     response += '/help - Display a list of commands\n/quote [ticker] - Show current price and data\n <i>(E.g. /quote btc)</i>\n'
     response += '/alert [ticker] [sign] [price] - Create a new alert\n<i>E.g. /alert btc > 60000 to create an alert when BTC goes above $60000</i>\n\n'
+    response += '/active - Show list of active alerts'
     response += 'All prices are in USD.'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 
@@ -24,8 +25,16 @@ def priceAlert(update, context):
         sign = context.args[1]
         price = context.args[2]
         id = get_id(ticker.lower())
-        context.job_queue.run_repeating(priceAlertCallback, interval=15, first=10, context=[ticker, sign, price, update.message.chat_id])    
-        response = f"⏳ You will be alerted when the price of {ticker} reaches ${price}. \n"
+
+        if sign == '<':
+            jobname = ticker + ' below 🔻$' + str(price)
+            dstring = 'below'
+        else:
+            jobname = ticker + ' above 🔺$' + str(price)
+            dstring = 'above'
+
+        context.job_queue.run_repeating(priceAlertCallback, interval=15, first=10, name = jobname,context=[ticker, sign, price, update.message.chat_id])    
+        response = f"⏳ You will be alerted when the price of {ticker} goes {dstring} ${price}. \n"
         response += f"The current price of {ticker} is ${cg.get_price(ids=id,vs_currencies='usd')[id]['usd']}."
     else:
         response = 'Please provide proper ticker and sign.'
@@ -71,6 +80,14 @@ def priceQuote(update, context):
         response = 'Please provide proper ticker.'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 
+def get_jobs(update,context):
+    response = 'Current Active Alerts:\n\n'
+    job_names = [job.name for job in context.job_queue.jobs()]
+    for i in job_names:
+        response += str(i) + '\n'
+    context.bot.send_message(chat_id=update.effective_chat.id,text=response)
+
+
 def get_id(ticker):
     df = pd.DataFrame.from_dict(coinlist)
     if len(df)>0:
@@ -92,6 +109,7 @@ def main():
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("start", startCommand))
+    dispatcher.add_handler(CommandHandler("active",get_jobs))
     dispatcher.add_handler(CommandHandler("alert", priceAlert))
     dispatcher.add_handler(CommandHandler("quote", priceQuote))
     updater.start_polling()

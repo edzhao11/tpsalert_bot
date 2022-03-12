@@ -6,7 +6,7 @@ import pandas as pd
 cg = CoinGeckoAPI()
 
 TELEGRAM_TOKEN = "5175633314:AAE2EFegd7M6ruGVWNRAGNMDrVnJDGA2ELE"
-
+coinlist = cg.get_coins_list()
 def startCommand(update,context):
     context.bot.send_message(chat_id=update.effective_chat.id,text="Starting Price Alert Bot!\nType /help for a list of commands.")
 
@@ -72,7 +72,6 @@ def priceQuote(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 
 def get_id(ticker):
-    coinlist = cg.get_coins_list()
     df = pd.DataFrame.from_dict(coinlist)
     if len(df)>0:
         df = df[df['symbol']==ticker].reset_index()
@@ -81,7 +80,6 @@ def get_id(ticker):
         return False
 
 def get_name(ticker):
-    coinlist = cg.get_coins_list()
     df = pd.DataFrame.from_dict(coinlist)
     if len(df)>0:
         df = df[df['symbol']==ticker].reset_index()
@@ -92,7 +90,6 @@ def get_name(ticker):
 def main():
     updater = Updater(token=TELEGRAM_TOKEN, use_context=True,defaults=Defaults(parse_mode=ParseMode.HTML))
     dispatcher = updater.dispatcher
-
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("start", startCommand))
     dispatcher.add_handler(CommandHandler("alert", priceAlert))

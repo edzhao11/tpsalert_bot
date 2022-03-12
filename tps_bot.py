@@ -13,8 +13,8 @@ def startCommand(update,context):
 def help(update,context):
     response = '🤖<b> Hello there!\nWelcome to the TPS Price Alert Bot</b>\n\nSee below for a list of commands:\n\n'
     response += '/help - Display a list of commands\n/quote [ticker] - Show current price and data\n <i>(E.g. /quote btc)</i>\n'
-    response += '/alert [ticker] [sign] [price] - Create a new alert\n<i>E.g. /alert btc > 60000 to create an alert when BTC goes above $60000</i>\n\n'
-    response += '/active - Show list of active alerts'
+    response += '/alert [ticker] [sign] [price] - Create a new alert\n<i>E.g. /alert btc > 60000 to create an alert when BTC goes above $60000</i>\n'
+    response += '/active - Show list of active alerts\n\n'
     response += 'All prices are in USD.'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 

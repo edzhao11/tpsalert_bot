@@ -12,8 +12,8 @@ def startCommand(update,context):
 
 def help(update,context):
     response = '🤖<b> Hello there!\nWelcome to the TPS Price Alert Bot</b>\n\nSee below for a list of commands:\n\n'
-    response += '/help - Display a list of commands\n/quote [ticker] - Show current price and data\n <i>(E.g. /quote btc)</i>\n'
-    response += '/alert [ticker] [sign] [price] - Create a new alert\n<i>E.g. /alert btc > 60000 to create an alert when BTC goes above $60000</i>\n'
+    response += '/help - Display a list of commands\n/quote [ticker] - Show current price and data\n <i>E.g. /quote btc</i>\n'
+    response += '/alert [ticker] [sign] [price] - Create a new alert\n<i>E.g. /alert btc > 60000</i>\n'
     response += '/active - Show list of active alerts\n\n'
     response += 'All prices are in USD.'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
@@ -27,10 +27,10 @@ def priceAlert(update, context):
         id = get_id(ticker.lower())
 
         if sign == '<':
-            jobname = ticker + ' below 🔻$' + str(price)
+            jobname = ticker + ' below🔻$' + str(price)
             dstring = 'below'
         else:
-            jobname = ticker + ' above 🔺$' + str(price)
+            jobname = ticker + ' above🔺$' + str(price)
             dstring = 'above'
 
         context.job_queue.run_repeating(priceAlertCallback, interval=15, first=10, name = jobname,context=[ticker, sign, price, update.message.chat_id])    
@@ -52,11 +52,11 @@ def priceAlertCallback(context):
 
     if sign == '<':
         if float(price) >= float(spot_price):
-            dstring = 'below 🔻'
+            dstring = 'below🔻'
             send = True
     else:
         if float(price) <= float(spot_price):
-            dstring = 'above 🔺'
+            dstring = 'above🔺'
             send = True
 
     if send:
@@ -75,16 +75,17 @@ def priceQuote(update, context):
         mkt_cap = cg_response[id]['usd_market_cap']
         day_vol = cg_response[id]['usd_24h_vol']
         day_change = cg_response[id]['usd_24h_change']
-        response = f"🪙{ticker} - {name}🪙\nUSD Price: ${price:,.2f}\nMarket Cap: ${mkt_cap:,.0f}\n24H Volume: ${day_vol:,.0f}\n24H Change: {day_change:.2f}%\n\n"    
+        response = f"🪙{ticker} - {name}🪙\nUSD Price: ${price:,.4f}\nMarket Cap: ${mkt_cap:,.0f}\n24H Volume: ${day_vol:,.0f}\n24H Change: {day_change:.2f}%\n\n"    
     else:
         response = 'Please provide proper ticker.'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 
 def get_jobs(update,context):
     response = 'Current Active Alerts:\n\n'
-    job_names = [job.name for job in context.job_queue.jobs()]
-    for i in job_names:
-        response += str(i) + '\n'
+    chatid = update.effective_chat.id
+    for job in context.job_queue.jobs():
+        if job.context[3] == chatid:
+            response += str(job.name) + '\n'
     context.bot.send_message(chat_id=update.effective_chat.id,text=response)
 
 
@@ -96,6 +97,7 @@ def get_id(ticker):
     else:
         return False
 
+
 def get_name(ticker):
     df = pd.DataFrame.from_dict(coinlist)
     if len(df)>0:
@@ -103,6 +105,7 @@ def get_name(ticker):
         return df.loc[df['name'] == min(df['name'],key=len)]['name'].values[0]
     else:
         return False
+
 
 def main():
     updater = Updater(token=TELEGRAM_TOKEN, use_context=True,defaults=Defaults(parse_mode=ParseMode.HTML))
@@ -114,6 +117,7 @@ def main():
     dispatcher.add_handler(CommandHandler("quote", priceQuote))
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == "__main__":
     main()
